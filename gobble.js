@@ -97,83 +97,83 @@ class Gobble {
         this.clockSeconds = Number(options.clockSeconds);
 
         this.randomizerStrategy = new RandomizerStrategy({ 
-        	x: this.y, 
-        	y: this.x, 
-        	type: RandomizerStrategyType.CLASSIC,
-        	includeUwithQ: this.includeUwithQ
+            x: this.y, 
+            y: this.x, 
+            type: RandomizerStrategyType.CLASSIC,
+            includeUwithQ: this.includeUwithQ
         });
 
-		this.board = this._calcNeighbors();
+        this.board = this._calcNeighbors();
 
-		this.dict = new Dictionary();
+        this.dict = new Dictionary();
 
-		this.guesses = new Set();
+        this.guesses = new Set();
         this.correctGuesses = new Set();
 
         this.answers = [];
 
-		if (options.letters) {
-		    this.letters = options.letters;
+        if (options.letters) {
+            this.letters = options.letters;
             setTimeout(() => {
                 this.answers = this.solve();
             }, 0);
-		} else {
-			this.shuffleBoard();
-		}
+        } else {
+            this.shuffleBoard();
+        }
 
         this.eventLog = new EventLog();
     }
 
-	// board square indexing scheme, e.g. for a 4x4 board:
-	//
-	//  0  1  2  3
-	//  4  5  6  7
-	//  8  9 10 11
-	// 12 13 14 15
-	//
-	// programmatically construct a list of all neighboring indices for each square on our x by y board.
-	_calcNeighbors(x = Number(this.x), y = Number(this.y)) {
-		let board = [];
-		for(let j = 0; j < y; j++) {
-			for(let i = 0; i < x; i++) {
-				let neighbors = [];
+    // board square indexing scheme, e.g. for a 4x4 board:
+    //
+    //  0  1  2  3
+    //  4  5  6  7
+    //  8  9 10 11
+    // 12 13 14 15
+    //
+    // programmatically construct a list of all neighboring indices for each square on our x by y board.
+    _calcNeighbors(x = Number(this.x), y = Number(this.y)) {
+        let board = [];
+        for(let j = 0; j < y; j++) {
+            for(let i = 0; i < x; i++) {
+                let neighbors = [];
 
-				let curr = (j*x)+i;
-				let n = curr - x;
-				let e = curr + 1;
-				let s = curr + x;
-				let w = curr - 1;
-				let ne = n + 1;
-				let nw = n - 1;
-				let se = s + 1;
-				let sw = s - 1;
+                let curr = (j*x)+i;
+                let n = curr - x;
+                let e = curr + 1;
+                let s = curr + x;
+                let w = curr - 1;
+                let ne = n + 1;
+                let nw = n - 1;
+                let se = s + 1;
+                let sw = s - 1;
 
-				if (i != x-1) neighbors.push(e);
-				if (i != 0)   neighbors.push(w);
-				if (j != y-1) neighbors.push(s);
-				if (j != 0)   neighbors.push(n);
+                if (i != x-1) neighbors.push(e);
+                if (i != 0)   neighbors.push(w);
+                if (j != y-1) neighbors.push(s);
+                if (j != 0)   neighbors.push(n);
 
-				if (i != 0   && j != 0)   neighbors.push(nw);
-				if (i != x-1 && j != 0)   neighbors.push(ne);
-				if (i != 0   && j != y-1) neighbors.push(sw);
-				if (i != x-1 && j != y-1) neighbors.push(se);
+                if (i != 0   && j != 0)   neighbors.push(nw);
+                if (i != x-1 && j != 0)   neighbors.push(ne);
+                if (i != 0   && j != y-1) neighbors.push(sw);
+                if (i != x-1 && j != y-1) neighbors.push(se);
 
-				board.push(neighbors.sort((a,b) => a-b));  // built-in sort defaults to alphabetical, not numerical
-			}
-		}
+                board.push(neighbors.sort((a,b) => a-b));  // built-in sort defaults to alphabetical, not numerical
+            }
+        }
 
-		return board;
-	}
+        return board;
+    }
 
-	resize(options) {
+    resize(options) {
         this.answers = [];
 
         this.x = Number(options.x);
         this.y = Number(options.y);
 
-		this.board = this._calcNeighbors();
+        this.board = this._calcNeighbors();
 
-		this.randomizerStrategy.x = options.x;
+        this.randomizerStrategy.x = options.x;
         this.randomizerStrategy.y = options.y;
 
         // TODO confirm...
@@ -191,122 +191,122 @@ class Gobble {
     }
 
     submitWord(moves /* array of board index values */) {
-    	// verify adjacency of submitted moves
-    	for(let i = 1; i < moves.length; i++) {
-    		if (this.board[moves[i-1]].indexOf(moves[i]) === -1) {
-				this.eventLog.add(`User submission had invalid adjacency: ${moves}:  no way to reach ${moves[i]} from ${moves[i-1]}`);
+        // verify adjacency of submitted moves
+        for(let i = 1; i < moves.length; i++) {
+            if (this.board[moves[i-1]].indexOf(moves[i]) === -1) {
+                this.eventLog.add(`User submission had invalid adjacency: ${moves}:  no way to reach ${moves[i]} from ${moves[i-1]}`);
                 return [undefined, ':impossible'];
-    		}
-    	}
+            }
+        }
 
-    	let word = '';
-    	moves.forEach((i,n) => {
+        let word = '';
+        moves.forEach((i,n) => {
             if (this.letters[i] === '.') {
                 word += 'qu';
             } else {
                 word += this.letters[i];
             }
-	   	});
+        });
 
-    	if (this.guesses.has(word)) {
-			this.eventLog.add(`User guessed already guessed word: ${word}`);
+        if (this.guesses.has(word)) {
+            this.eventLog.add(`User guessed already guessed word: ${word}`);
 
-			if (this.warnOnDuplicateGuess) {
-				// TODO warn user on guess.
-			}
+            if (this.warnOnDuplicateGuess) {
+                // TODO warn user on guess.
+            }
 
-			return [word, ':duplicate'];
-    	} else {
-	    	this.guesses.add(word);
-			this.eventLog.add(`User guessed the word: ${word}`);
+            return [word, ':duplicate'];
+        } else {
+            this.guesses.add(word);
+            this.eventLog.add(`User guessed the word: ${word}`);
 
             if (this.answers[this.minWordLength] && this.answers[this.minWordLength].indexOf(word) !== -1) {
                 this.correctGuesses.add(word);
-				return [word, ':correct'];
+                return [word, ':correct'];
             }
 
-			return [word, ':incorrect'];
-	    }
+            return [word, ':incorrect'];
+        }
     }
 
     scoreGuess(guess) {
-    	if (this.x === 6 && this.y === 6) { 
-	    	switch (guess.length) {
-	    		case 1:
-	    		case 2:
-	    		case 3:
-	    			return 0;
-	    		case 4:
-					return 1;
-	    		case 5:
-	    			return 2;
-	    		case 6:
-	    			return 3;
-	    		case 7:
-	    			return 5;
-	    		case 8:
-	    			return 11;
-				default:
-					return (guess.length * 2);
-			}
-    	} else if (this.x === 5 && this.y === 5) {
-	    	switch (guess.length) {
-	    		case 1:
-	    		case 2:
-	    		case 3:
-	    			return 0;
-	    		case 4:
-					return 1;
-	    		case 5:
-	    			return 2;
-	    		case 6:
-	    			return 3;
-	    		case 7:
-	    			return 5;
-	    		case 8:
-	    		default:
-	    			return 11;
-	    	}
-    	} else {
-	    	// this is the default scoring system
-	    	switch (guess.length) {
-	    		case 1:
-	    		case 2:
-	    			return 0;
-	    		case 3:
-	    		case 4:
-					return 1;
-	    		case 5:
-	    			return 2;
-	    		case 6:
-	    			return 3;
-	    		case 7:
-	    			return 5;
-	    		case 8:
-	    		default:
-	    			return 11;
-    		}
-	    }
+        if (this.x === 6 && this.y === 6) { 
+            switch (guess.length) {
+                case 1:
+                case 2:
+                case 3:
+                    return 0;
+                case 4:
+                    return 1;
+                case 5:
+                    return 2;
+                case 6:
+                    return 3;
+                case 7:
+                    return 5;
+                case 8:
+                    return 11;
+                default:
+                    return (guess.length * 2);
+            }
+        } else if (this.x === 5 && this.y === 5) {
+            switch (guess.length) {
+                case 1:
+                case 2:
+                case 3:
+                    return 0;
+                case 4:
+                    return 1;
+                case 5:
+                    return 2;
+                case 6:
+                    return 3;
+                case 7:
+                    return 5;
+                case 8:
+                default:
+                    return 11;
+            }
+        } else {
+            // this is the default scoring system
+            switch (guess.length) {
+                case 1:
+                case 2:
+                    return 0;
+                case 3:
+                case 4:
+                    return 1;
+                case 5:
+                    return 2;
+                case 6:
+                    return 3;
+                case 7:
+                    return 5;
+                case 8:
+                default:
+                    return 11;
+            }
+        }
     }
 
     scoreGuesses() {
-		// TODOrefcator this method to use this.answers, not our dictoinary object/worker thread...
+        // TODOrefcator this method to use this.answers, not our dictoinary object/worker thread...
 
-		let score = 0;
-    	this.guesses.forEach(guess => {
-    		if (this.isLegalWord(guess)) {
-    			score += this.scoreGuess(guess);
-    		}
-    	});
+        let score = 0;
+        this.guesses.forEach(guess => {
+            if (this.isLegalWord(guess)) {
+                score += this.scoreGuess(guess);
+            }
+        });
 
-    	return score;
+        return score;
     }
 
     missedAnswers() {
         return new Set(this.answers[this.minWordLength].filter(x => !this.correctGuesses.has(x)));
     }
 
-	toHtml() {
+    toHtml() {
         let result = '';
 
         for(let j = 0; j < this.y; j++) {
@@ -327,7 +327,7 @@ class Gobble {
         }
 
         return result;
-	}
+    }
 
     //TODO game.size doesn't really belong as a uniquely defining characteristic of an instance of a game
     toHtmlAnchor() {
@@ -335,135 +335,135 @@ class Gobble {
     }
 
     toString() {
-    	let result = '\n+-' + '---'.repeat(this.x) + '+\n';
-    	for(let j = 0; j < this.y; j++) {
-    		result += '| ';
-    		for(let i = 0; i < this.x; i++) {
-			    let curr = (j*this.x)+i;
-    			if (this.letters[curr] === '.') {
-    				result += 'Qu ';
-    			} else {
-	    			result += this.letters[curr].toUpperCase() + '  ';
-	    		}
-    		}
+        let result = '\n+-' + '---'.repeat(this.x) + '+\n';
+        for(let j = 0; j < this.y; j++) {
+            result += '| ';
+            for(let i = 0; i < this.x; i++) {
+                let curr = (j*this.x)+i;
+                if (this.letters[curr] === '.') {
+                    result += 'Qu ';
+                } else {
+                    result += this.letters[curr].toUpperCase() + '  ';
+                }
+            }
 
-    		result += '|\n';
-    	}
+            result += '|\n';
+        }
 
-    	result += '+-' + '---'.repeat(this.x) + '+\n';
-    	result += `\nLetters: ${this.letters}\n\n`;
+        result += '+-' + '---'.repeat(this.x) + '+\n';
+        result += `\nLetters: ${this.letters}\n\n`;
 
-    	if (this.answers.length > 0) {
-    		this.answers.forEach((count, i) => {
-    			result += `${i}+ letter words: ${count.length}`;
+        if (this.answers.length > 0) {
+            this.answers.forEach((count, i) => {
+                result += `${i}+ letter words: ${count.length}`;
 
-    			if (count.length < 10) {
-    				result += ` (${count})`;
-    			}
+                if (count.length < 10) {
+                    result += ` (${count})`;
+                }
 
-    			if (this.minWordLength === i) {
-	    			result += '  <-- chosen minimum word length';
-	    		}
-	    		result += '\n';
-    		});
-    	}
+                if (this.minWordLength === i) {
+                    result += '  <-- chosen minimum word length';
+                }
+                result += '\n';
+            });
+        }
 
-    	if (this.answers[this.minWordLength].length > 0) {
-			result += '\nAnswers: '; 
-    		result += this.answers[this.minWordLength];
-    		result += '\n'; 
-		}
+        if (this.answers[this.minWordLength].length > 0) {
+            result += '\nAnswers: '; 
+            result += this.answers[this.minWordLength];
+            result += '\n'; 
+        }
 
-		if (this.guesses.size > 0) {
-			result += '\nGuesses: ';
-			result += Array.from(this.guesses);
-			result += `\n\nScore: ${this.scoreGuesses()}\n`;
-		}
+        if (this.guesses.size > 0) {
+            result += '\nGuesses: ';
+            result += Array.from(this.guesses);
+            result += `\n\nScore: ${this.scoreGuesses()}\n`;
+        }
 
-    	return result;
+        return result;
     }
 
     inspect() {  // for more succinct console.log() output
         return this.toString();
     }
 
-	solve(letters) {
-		const currentLetters = this.letters;
-		if (letters) {
-			this.letters = letters;
-		}
+    solve(letters) {
+        const currentLetters = this.letters;
+        if (letters) {
+            this.letters = letters;
+        }
 
-		let originalMinWordLength = this.minWordLength;
-		this.minWordLength = 2;
-		let answers = [];
+        let originalMinWordLength = this.minWordLength;
+        this.minWordLength = 2;
+        let answers = [];
 
-		while (true) {
-			this.words = new Set();
-			this.board.forEach((neighbors, i) => {
-				let visited = [];
-				visited[i] = true;
-				this._solve(i, visited, (this.letters[i] === '.' ? 'qu' : this.letters[i]));
-			});
+        while (true) {
+            this.words = new Set();
+            this.board.forEach((neighbors, i) => {
+                let visited = [];
+                visited[i] = true;
+                this._solve(i, visited, (this.letters[i] === '.' ? 'qu' : this.letters[i]));
+            });
 
-			if (this.words.size > 0) {
+            if (this.words.size > 0) {
                 // NOTE 2015.11.29:  [...this.words].sort() worked in desktop chrome, but not mobile Safari.  The ... notation was silently failing.
                 // And `this.words._keys` would fail in desktop chrome.  So we try both.
                 let tempArray = this.words._keys || [...this.words];
                 // /NOTE
-				answers[this.minWordLength] = tempArray.sort();
+                answers[this.minWordLength] = tempArray.sort();
                 this.minWordLength++;
-			} else {
-				this.minWordLength = originalMinWordLength;
-				if (letters) {  // restore our original letters
-					this.letters = currentLetters;
-				}
+            } else {
+                this.minWordLength = originalMinWordLength;
+                if (letters) {  // restore our original letters
+                    this.letters = currentLetters;
+                }
 
-				return answers;			
-			}
-		}
-	}
+                return answers;         
+            }
+        }
+    }
 
-	_solve(curr, visited, candidate) {
-	    if (! this.isLegalWordPrefix(candidate)) {
-	        return;
-	    }
-	 
-	    if (this.isLegalWord(candidate)) {
-	        this.words.add(candidate);
-	    }
+    _solve(curr, visited, candidate) {
+        if (! this.isLegalWordPrefix(candidate)) {
+            return;
+        }
+     
+        if (this.isLegalWord(candidate)) {
+            this.words.add(candidate);
+        }
 
-	    visited[curr] = true;
-	 
-	 	this.board[curr].forEach(i => {
-	 		if (! visited[i]) {
-	 			visited[i] = true;
-	 			this._solve(i, visited.slice(), candidate + (this.letters[i] === '.' ? 'qu' : this.letters[i]));
+        visited[curr] = true;
+     
+        this.board[curr].forEach(i => {
+            if (! visited[i]) {
+                visited[i] = true;
+                this._solve(i, visited.slice(), candidate + (this.letters[i] === '.' ? 'qu' : this.letters[i]));
                 visited[i] = false;  // back out one step of our depth first search
-	 		}
-	 	});
-	}
+            }
+        });
+    }
 
-	isLegalWord(word) {
-		return word.length >= this.minWordLength && this.dict.isWord(word);
-	}
+    isLegalWord(word) {
+        return word.length >= this.minWordLength && this.dict.isWord(word);
+    }
 
-	isLegalWordPrefix(prefix) {
-		return this.dict.isWordPrefix(prefix);
-	}
+    isLegalWordPrefix(prefix) {
+        return this.dict.isWordPrefix(prefix);
+    }
 
-	shuffleBoard(onShuffleBoardCallback) {
+    shuffleBoard(onShuffleBoardCallback) {
         this.correctGuesses = new Set();
         this.guesses = new Set();
 
-		this.letters = this.randomizerStrategy.shuffleBoard();
-		setTimeout(() => {
+        this.letters = this.randomizerStrategy.shuffleBoard();
+        setTimeout(() => {
             this.answers = this.solve();
 
             if (onShuffleBoardCallback) {
                 onShuffleBoardCallback();
             }
         }, 0);
-	}
+    }
 };
 
 module.exports = Gobble;
